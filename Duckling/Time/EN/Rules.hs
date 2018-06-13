@@ -782,6 +782,59 @@ ruleYYYYMMDD = Rule
       _ -> Nothing
   }
 
+{-
+ruleNQYYYY :: Rule
+ruleNQYYYY = Rule
+  { name = "<n>Qyyyy"
+  , pattern =
+    [ regex "(([1-4][Q|q])(\\d{4}))"
+    ]--
+  , prod = \tokens -> case tokens of
+      (Token RegexMatch (GroupMatch (nn:yy:_)):_) -> do
+        n <- parseInt nn
+       y <- parseInt yy
+       --tt $ cycleNthAfter False TG.Quarter (n - 1) $ cycleNth TG.Year y
+       tt $ yearMonthDay y (((n-1)*3)+1) 1
+      _ -> Nothing
+  }
+-}
+
+ruleNumeralQuarterYear :: Rule
+ruleNumeralQuarterYear = Rule
+  { name = "<integer> quarter <year>"
+  , pattern =
+    [ Predicate $ isIntegerBetween 1 4
+    , Predicate $ isGrain TG.Quarter
+    , dimension Time
+    ]
+  , prod = \tokens -> case tokens of
+      (token:_:Token Time td:_) -> do
+        n <- getIntValue token
+        tt $ cycleNthAfter False TG.Quarter (n - 1) td
+      _ -> Nothing
+  } 
+
+ruleIntervalYTD :: Rule
+ruleIntervalYTD = Rule
+  { name = "YTD (interval)"
+  , pattern =
+   [ regex "YTD|year to date"
+   ]
+  , prod = \_ -> do
+      start <- intersect (month 1) $ cycleNth TG.Year 0
+      Token Time <$> interval TTime.Closed start (cycleNth TG.Second 0)
+  }
+
+ruleIntervalMTD :: Rule
+ruleIntervalMTD = Rule
+  { name = "MTD (interval)"
+  , pattern =
+   [ regex "MTD|month to date"
+   ]
+  , prod = \_ -> do
+      Token Time <$> interval TTime.Closed (cycleNth TG.Month 0) (cycleNth TG.Second 0)
+  }
+
 ruleNoonMidnightEOD :: Rule
 ruleNoonMidnightEOD = Rule
   { name = "noon|midnight|EOD|end of day"
@@ -2238,16 +2291,19 @@ rules =
   , ruleTODAMPM
   , ruleHONumeral
   , ruleHODHalf
-  , ruleHODQuarter
+  --, ruleHODQuarter
   , ruleNumeralToHOD
   , ruleHalfToHOD
-  , ruleQuarterToHOD
+  --, ruleQuarterToHOD
   , ruleNumeralAfterHOD
   , ruleHalfAfterHOD
-  , ruleQuarterAfterHOD
+  --, ruleQuarterAfterHOD
   , ruleHalfHOD
   , ruleYYYYMMDD
   , ruleMMYYYY
+  , ruleNumeralQuarterYear
+  , ruleIntervalYTD
+  , ruleIntervalMTD
   , ruleNoonMidnightEOD
   , rulePartOfDays
   , ruleEarlyMorning

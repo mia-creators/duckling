@@ -27,7 +27,7 @@ grains = [ ("second (grain) ", "sec(ond)?s?",      TG.Second)
          , ("day (grain)"    , "days?",            TG.Day)
          , ("week (grain)"   , "weeks?",           TG.Week)
          , ("month (grain)"  , "months?",          TG.Month)
-         , ("quarter (grain)", "(quarter|qtr)s?",  TG.Quarter)
+         , ("quarter (grain)", "(quarter|qtr)s?|Q|q",  TG.Quarter)
          , ("year (grain)"   , "y(ea)?rs?",        TG.Year)
          ]
 
