@@ -40,11 +40,11 @@ ruleDurationQuarterOfAnHour = Rule
   , prod = \_ -> Just . Token Duration $ duration TG.Minute 15
   }
 
-ruleDurationHalfAnHourAbbrev :: Rule
-ruleDurationHalfAnHourAbbrev = Rule
-  { name = "half an hour (abbrev)."
+ruleDurationHalfAnHour :: Rule
+ruleDurationHalfAnHour = Rule
+  { name = "half an hour"
   , pattern =
-    [ regex "1/2\\s?h"
+    [ regex "(1/2\\s?h(our)?|half an? hour)"
     ]
   , prod = \_ -> Just . Token Duration $ duration TG.Minute 30
   }
@@ -138,31 +138,6 @@ ruleDurationA = Rule
       _ -> Nothing
   }
 
-ruleDurationHalfATimeGrain :: Rule
-ruleDurationHalfATimeGrain = Rule
-  { name = "half a <time-grain>"
-  , pattern =
-    [ regex "(1/2|half)( an?)?"
-    , dimension TimeGrain
-    ]
-  , prod = \case
-      (_:Token TimeGrain grain:_) -> Token Duration <$> timesOneAndAHalf grain 0
-      _ -> Nothing
-  }
-
-ruleDurationOneGrainAndHalf :: Rule
-ruleDurationOneGrainAndHalf = Rule
-  { name = "a <unit-of-duration> and a half"
-  , pattern =
-    [ regex "an?|one"
-    , dimension TimeGrain
-    , regex "and (a )?half"
-    ]
-  , prod = \case
-      (_:Token TimeGrain grain:_) -> Token Duration <$> timesOneAndAHalf grain 1
-      _ -> Nothing
-  }
-
 ruleDurationPrecision :: Rule
 ruleDurationPrecision = Rule
   { name = "about|exactly <duration>"
@@ -175,9 +150,9 @@ ruleDurationPrecision = Rule
         _ -> Nothing
   }
 
-ruleCompositeDurationCommasAnd :: Rule
-ruleCompositeDurationCommasAnd = Rule
-  { name = "composite <duration> (with ,/and)"
+ruleCompositeDuration :: Rule
+ruleCompositeDuration = Rule
+  { name = "composite <duration>"
   , pattern =
     [ Predicate isNatural
     , dimension TimeGrain
@@ -193,36 +168,17 @@ ruleCompositeDurationCommasAnd = Rule
       _ -> Nothing
   }
 
-ruleCompositeDuration :: Rule
-ruleCompositeDuration = Rule
-  { name = "composite <duration>"
-  , pattern =
-    [ Predicate isNatural
-    , dimension TimeGrain
-    , dimension Duration
-    ]
-  , prod = \case
-      (Token Numeral NumeralData{TNumeral.value = v}:
-       Token TimeGrain g:
-       Token Duration dd@DurationData{TDuration.grain = dg}:
-       _) | g > dg -> Just . Token Duration $ duration g (floor v) <> dd
-      _ -> Nothing
-  }
-
 rules :: [Rule]
 rules =
   [ ruleDurationQuarterOfAnHour
-  , ruleDurationHalfAnHourAbbrev
+  , ruleDurationHalfAnHour
   , ruleDurationThreeQuartersOfAnHour
   , ruleDurationFortnight
   , ruleDurationNumeralMore
   , ruleDurationDotNumeralHours
   , ruleDurationAndHalfHour
   , ruleDurationA
-  , ruleDurationHalfATimeGrain
-  , ruleDurationOneGrainAndHalf
   , ruleDurationPrecision
   , ruleNumeralQuotes
   , ruleCompositeDuration
-  , ruleCompositeDurationCommasAnd
   ]

@@ -122,9 +122,6 @@ latentCorpus = (testContext, testOptions {withLatent = True}, xs)
       , examples (datetime (2013, 2, 12, 19, 0, 0) Hour)
                  [ "7p"
                  ]
-      , examples (datetime (2013, 2, 12, 10, 30, 0) Minute)
-                 [ "ten thirty"
-                 ]
       --, examples (datetime (1954, 1, 1, 0, 0, 0) Year)
       --           [ "1954"
       --           ]
@@ -329,10 +326,16 @@ allExamples = concat
              ]
   , examples (datetime (2015, 7, 1, 0, 0, 0) Quarter)
              [ "3qtr2015"
-             , "3quarter2015"
-             , "3Q2015"
-             , "3q2015"
-             ]
+	     , "3quarter2015"
+	     , "3Q2015"
+	     , "3q 2015"
+	     , "2015 Q3"
+	     , "Q3 2015"
+	     ]
+  , examples (datetime (2016, 12, 26, 0, 0, 0) Week)
+             [ "week1 2017"
+	     , "WEEK1 2017"
+	     ]
   , examples (datetime (2018, 10, 1, 0, 0, 0) Quarter)
              [ "4th quarter 2018"
              , "4th qtr 2018"
@@ -523,7 +526,7 @@ allExamples = concat
              ]
   , examples (datetime (2013, 2, 12, 11, 45, 0) Minute)
              [-- "a quarter to noon"
-               "11:45am"
+              "11:45am"
              , "15 to noon"
              ]
   , examples (datetime (2013, 2, 12, 20, 0, 0) Hour)
@@ -570,8 +573,8 @@ allExamples = concat
              [ "in 60 minutes"
              ]
   , examples (datetime (2013, 2, 12, 4, 45, 0) Second)
-             [-- "in a quarter of an hour"
-               "in 1/4h"
+             [ --"in a quarter of an hour"
+              "in 1/4h"
              , "in 1/4 h"
              , "in 1/4 hour"
              ]
@@ -582,8 +585,8 @@ allExamples = concat
              , "in 1/2 hour"
              ]
   , examples (datetime (2013, 2, 12, 5, 15, 0) Second)
-             [-- "in three-quarters of an hour"
-               "in 3/4h"
+             [--in three-quarters of an hour"
+              "in 3/4h"
              , "in 3/4 h"
              , "in 3/4 hour"
              ]
@@ -678,8 +681,6 @@ allExamples = concat
              ]
   , examples (datetimeInterval ((2013, 12, 18, 0, 0, 0), (2013, 12, 29, 0, 0, 0)) Day)
              [ "for 10 days from 18th Dec"
-             , "from 18th Dec for 10 days"
-             , "18th Dec for 10 days"
              ]
   , examples (datetimeInterval ((2013, 6, 21, 0, 0, 0), (2013, 9, 24, 0, 0, 0)) Day)
              [ "this Summer"
@@ -876,7 +877,7 @@ allExamples = concat
              [ "last 2 seconds"
              , "last two seconds"
              ]
- , examples (datetimeInterval ((2013, 2, 12, 4, 30, 1), (2013, 2, 12, 4, 30, 4)) Second)
+  , examples (datetimeInterval ((2013, 2, 12, 4, 30, 1), (2013, 2, 12, 4, 30, 4)) Second)
              [ "next 3 seconds"
              , "next three seconds"
              ]

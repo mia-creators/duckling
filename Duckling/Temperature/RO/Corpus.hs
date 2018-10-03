@@ -9,11 +9,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Duckling.Temperature.RO.Corpus
-  ( corpus
-  ) where
+  ( corpus ) where
 
-import Data.String
 import Prelude
+import Data.String
 
 import Duckling.Locale
 import Duckling.Resolve
@@ -31,9 +30,7 @@ allExamples = concat
              , "37 grade Celsius"
              , "treizeci si sapte celsius"
              , "37 grade Celsius"
-             , "37 de grade de Celsius"
              , "treizeci si sapte celsius"
-             , "treizeci si sapte de celsius"
              ]
   , examples (simple Fahrenheit 70)
              [ "70°F"
@@ -44,6 +41,5 @@ allExamples = concat
   , examples (simple Degree 45)
              [ "45°"
              , "45 grade"
-             , "45 de grade"
              ]
   ]

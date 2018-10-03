@@ -9,22 +9,18 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Duckling.Numeral.RO.Corpus
-  ( corpus
-  ) where
+  ( corpus ) where
 
-import Data.String
 import Prelude
+import Data.String
 
 import Duckling.Locale
 import Duckling.Numeral.Types
 import Duckling.Resolve
 import Duckling.Testing.Types
 
-context :: Context
-context = testContext {locale = makeLocale RO Nothing}
-
 corpus :: Corpus
-corpus = (context, testOptions, allExamples)
+corpus = (testContext {locale = makeLocale RO Nothing}, testOptions, allExamples)
 
 allExamples :: [Example]
 allExamples = concat
@@ -167,10 +163,6 @@ allExamples = concat
              [ "7 milioane"
              , "sapte milioane"
              , "șapte milioane"
-             ]
-  , examples (NumeralValue 21000000)
-             [ "21 de milioane"
-             , "douazeci si unu de milioane"
              ]
   , examples (NumeralValue 1000000000)
              [ "un miliard"

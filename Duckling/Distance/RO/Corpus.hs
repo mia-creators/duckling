@@ -44,7 +44,4 @@ allExamples = concat
   , examples (simple Foot 10)
              [ "zece picioare"
              ]
-  , examples (simple Foot 20)
-             [ "20 de picioare"
-             ]
   ]

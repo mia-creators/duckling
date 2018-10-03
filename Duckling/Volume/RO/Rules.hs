@@ -7,15 +7,13 @@
 
 
 {-# LANGUAGE GADTs #-}
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Duckling.Volume.RO.Rules
-  ( rules
-  ) where
+  ( rules ) where
 
-import Data.String
 import Prelude
+import Data.String
 
 import Duckling.Dimensions.Types
 import Duckling.Types
@@ -27,9 +25,9 @@ ruleLatentVolMl = Rule
   { name = "<latent vol> ml"
   , pattern =
     [ dimension Volume
-    , regex "(de )?m(ililitr[ui]|l)"
+    , regex "m(ililitr[ui]|l)"
     ]
-  , prod = \case
+  , prod = \tokens -> case tokens of
       (Token Volume vd:_) ->
         Just . Token Volume $ withUnit TVolume.Millilitre vd
       _ -> Nothing
@@ -40,9 +38,9 @@ ruleVolHectoliters = Rule
   { name = "<vol> hectoliters"
   , pattern =
     [ dimension Volume
-    , regex "(de )?hectolitr[ui]"
+    , regex "hectolitr[ui]"
     ]
-  , prod = \case
+  , prod = \tokens -> case tokens of
       (Token Volume vd:_) ->
         Just . Token Volume $ withUnit TVolume.Hectolitre vd
       _ -> Nothing
@@ -53,9 +51,9 @@ ruleVolLiters = Rule
   { name = "<vol> liters"
   , pattern =
     [ dimension Volume
-    , regex "(de )?l(itr[ui])?"
+    , regex "l(itr[ui])?"
     ]
-  , prod = \case
+  , prod = \tokens -> case tokens of
       (Token Volume vd:_) ->
         Just . Token Volume $ withUnit TVolume.Litre vd
       _ -> Nothing
@@ -67,7 +65,7 @@ ruleHalfLiter = Rule
   , pattern =
     [ regex "jum(a|ă)tate de litr[ui]"
     ]
-  , prod = const . Just . Token Volume . withUnit TVolume.Litre $ volume 0.5
+  , prod = \_ -> Just . Token Volume . withUnit TVolume.Litre $ volume 0.5
   }
 
 ruleLatentVolGalon :: Rule
@@ -75,9 +73,9 @@ ruleLatentVolGalon = Rule
   { name = "<latent vol> galon"
   , pattern =
     [ dimension Volume
-    , regex "(de )?gal(oane|on)?"
+    , regex "gal(oane|on)?"
     ]
-  , prod = \case
+  , prod = \tokens -> case tokens of
       (Token Volume vd:_) ->
         Just . Token Volume $ withUnit TVolume.Gallon vd
       _ -> Nothing

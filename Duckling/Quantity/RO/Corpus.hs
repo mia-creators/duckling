@@ -9,11 +9,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Duckling.Quantity.RO.Corpus
-  ( corpus
-  ) where
+  ( corpus ) where
 
-import Data.String
 import Prelude
+import Data.String
 
 import Duckling.Locale
 import Duckling.Quantity.Types
@@ -33,9 +32,5 @@ allExamples = concat
              ]
   , examples (simple Pound 500 (Just "zahăr"))
              [ "cinci sute livre de zahăr"
-             , "cinci sute de livre de zahăr"
-             ]
-  , examples (simple Pound 21 (Just "mamaliga"))
-             [ "douăzeci și unu de livre de mamaliga"
              ]
   ]
