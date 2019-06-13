@@ -57,7 +57,21 @@ ruleIntersectOf = Rule
   , pattern =
     [ Predicate isNotLatent
     , regex "of|from|for|'s|,"
-    , Predicate $ or . sequence [isNotLatent, isGrainOfTime TG.Year]
+    , Predicate isNotLatent
+    ]
+  , prod = \tokens -> case tokens of
+      (Token Time td1:_:Token Time td2:_) ->
+        Token Time . notLatent <$> intersect td1 td2
+      _ -> Nothing
+  }
+
+ruleIntersectYear :: Rule
+ruleIntersectYear = Rule
+  { name = "intersect by \",\", \"of\", \"from\" for year"
+  , pattern =
+    [ Predicate isNotLatent
+    , regex "of|from|,"
+    , Predicate $ isGrainOfTime TG.Year
     ]
   , prod = \tokens -> case tokens of
       (Token Time td1:_:Token Time td2:_) ->
@@ -465,7 +479,7 @@ ruleTODLatent = Rule
   , prod = \tokens -> case tokens of
       (token:_) -> do
         n <- getIntValue token
-        tt . mkLatent $ hour True n
+        tt . mkLatent $ hour (n < 13) n
       _ -> Nothing
   }
 
@@ -591,10 +605,13 @@ ruleTODAMPM = Rule
     , regex "(in the )?([ap])(\\s|\\.)?(m?)\\.?"
     ]
   , prod = \tokens -> case tokens of
-      (Token Time td@TimeData {TTime.latent = True}:
-       Token RegexMatch (GroupMatch (_:ap:_:"":_)):_) ->
+      (Token Time td@TimeData{TTime.latent = True}:
+       Token RegexMatch (GroupMatch (_:ap:_:"":_)):
+       _) ->
         tt . mkLatent $ timeOfDayAMPM (Text.toLower ap == "a") td
-      (Token Time td:Token RegexMatch (GroupMatch (_:ap:_)):_) ->
+      (Token Time td@TimeData{TTime.form = Just (TTime.TimeOfDay (Just hours) _)}:
+       Token RegexMatch (GroupMatch (_:ap:_)):
+       _) | hours < 13 ->
         tt $ timeOfDayAMPM (Text.toLower ap == "a") td
       _ -> Nothing
   }
@@ -603,15 +620,18 @@ ruleHONumeral :: Rule
 ruleHONumeral = Rule
   { name = "<hour-of-day> <integer>"
   , pattern =
-    [ Predicate $ and . sequence [isNotLatent, isAnHourOfDay]
+    [ Predicate isAnHourOfDay
     , Predicate $ isIntegerBetween 1 59
     ]
   , prod = \tokens -> case tokens of
-      (Token Time TimeData {TTime.form = Just (TTime.TimeOfDay (Just hours) is12H)}:
+      (Token Time TimeData{TTime.form = Just (TTime.TimeOfDay (Just hours) is12H)
+                          ,TTime.latent = isLatent}:
        token:
        _) -> do
         n <- getIntValue token
-        tt $ hourMinute is12H hours n
+        if isLatent
+          then tt . mkLatent $ hourMinute is12H hours n
+          else tt $ hourMinute is12H hours n
       _ -> Nothing
   }
 
@@ -623,8 +643,8 @@ ruleHODHalf = Rule
     , regex "half"
     ]
   , prod = \tokens -> case tokens of
-      (Token Time TimeData {TTime.form = Just (TTime.TimeOfDay (Just hours) is12H)}:_) ->
-        tt $ hourMinute is12H hours 30
+      (Token Time TimeData{TTime.form = Just (TTime.TimeOfDay (Just hours) is12H)}:
+       _) -> tt $ hourMinute is12H hours 30
       _ -> Nothing
   }
 
@@ -636,8 +656,8 @@ ruleHODQuarter = Rule
     , regex "(a|one)? ?quarter"
     ]
   , prod = \tokens -> case tokens of
-      (Token Time TimeData {TTime.form = Just (TTime.TimeOfDay (Just hours) is12H)}:_) ->
-        tt $ hourMinute is12H hours 15
+      (Token Time TimeData{TTime.form = Just (TTime.TimeOfDay (Just hours) is12H)}:
+       _) -> tt $ hourMinute is12H hours 15
       _ -> Nothing
   }
 
@@ -766,15 +786,15 @@ ruleYYYYMMDD = Rule
 ruleNQYYYY :: Rule
 ruleNQYYYY = Rule
   { name = "<n>Qyyyy"
-  , pattern =    
+  , pattern =
     [ regex "(([1-4][Q|q])(\\d{4}))"
-    ]
+    ]--
   , prod = \tokens -> case tokens of
       (Token RegexMatch (GroupMatch (nn:yy:_)):_) -> do
         n <- parseInt nn
-	y <- parseInt yy
-	--tt $ cycleNthAfter False TG.Quarter (n - 1) $ cycleNth TG.Year y
-	tt $ yearMonthDay y (((n-1)*3)+1) 1
+       y <- parseInt yy
+       --tt $ cycleNthAfter False TG.Quarter (n - 1) $ cycleNth TG.Year y
+       tt $ yearMonthDay y (((n-1)*3)+1) 1
       _ -> Nothing
   }
 -}
@@ -792,37 +812,7 @@ ruleNumeralQuarterYear = Rule
         n <- getIntValue token
         tt $ cycleNthAfter False TG.Quarter (n - 1) td
       _ -> Nothing
-  }
-
-ruleQuarterNumeralYear :: Rule
-ruleQuarterNumeralYear = Rule
-  { name = "quarter <integer> <year>"
-  , pattern =
-    [ Predicate $ isGrain TG.Quarter
-    , Predicate $ isIntegerBetween 1 4
-    , dimension Time
-    ]
-  , prod = \tokens -> case tokens of
-      (_:token:Token Time td:_) -> do
-        n <- getIntValue token
-        tt $ cycleNthAfter False TG.Quarter (n - 1) td
-      _ -> Nothing
-  }
-
-ruleYearQuarterNumeral :: Rule
-ruleYearQuarterNumeral = Rule
-  { name = "<year> quarter <integer>"
-  , pattern =
-    [ dimension Time
-    , Predicate $ isGrain TG.Quarter
-    , Predicate $ isIntegerBetween 1 4 
-    ]
-  , prod = \tokens -> case tokens of
-      (Token Time td:_:token:_) -> do
-        n <- getIntValue token
-        tt $ cycleNthAfter False TG.Quarter (n - 1) td
-      _ -> Nothing
-  }
+  } 
 
 ruleNumeralWeekYear :: Rule
 ruleNumeralWeekYear = Rule
@@ -835,9 +825,10 @@ ruleNumeralWeekYear = Rule
   , prod = \tokens -> case tokens of
       (_:token:Token Time td:_) -> do
         n <- getIntValue token
-        tt $ cycleNthAfter False TG.Week (n-1) td
+        tt $ cycleNthAfter False TG.Week n td
       _ -> Nothing
   }
+
 ruleIntervalYTD :: Rule
 ruleIntervalYTD = Rule
   { name = "YTD (interval)"
@@ -847,7 +838,7 @@ ruleIntervalYTD = Rule
   , prod = \_ -> do
       start <- intersect (month 1) $ cycleNth TG.Year 0
       Token Time <$> interval TTime.Closed start (cycleNth TG.Second 0)
-}
+  }
 
 ruleIntervalMTD :: Rule
 ruleIntervalMTD = Rule
@@ -857,7 +848,7 @@ ruleIntervalMTD = Rule
    ]
   , prod = \_ -> do
       Token Time <$> interval TTime.Closed (cycleNth TG.Month 0) (cycleNth TG.Second 0)
-}
+  }
 
 ruleNoonMidnightEOD :: Rule
 ruleNoonMidnightEOD = Rule
@@ -2227,6 +2218,35 @@ ruleIntervalForDurationFrom = Rule
       _ -> Nothing
 }
 
+ruleIntervalTimeForDuration :: Rule
+ruleIntervalTimeForDuration = Rule
+  { name = "<time> for <duration>"
+  , pattern =
+    [ Predicate isNotLatent
+    , regex "for"
+    , dimension Duration
+    ]
+  , prod = \tokens -> case tokens of
+      (Token Time td1:_:Token Duration dd:_) ->
+        Token Time <$> interval TTime.Open td1 (durationAfter dd td1)
+      _ -> Nothing
+}
+
+ruleIntervalFromTimeForDuration :: Rule
+ruleIntervalFromTimeForDuration = Rule
+  { name = "from <time> for <duration>"
+  , pattern =
+    [ regex "(from|starting|beginning|after|starting from)"
+    , Predicate isNotLatent
+    , regex "for"
+    , dimension Duration
+    ]
+  , prod = \tokens -> case tokens of
+      (_:Token Time td1:_:Token Duration dd:_) ->
+        Token Time <$> interval TTime.Open td1 (durationAfter dd td1)
+      _ -> Nothing
+}
+
 ruleTimezone :: Rule
 ruleTimezone = Rule
   { name = "<time> timezone"
@@ -2245,6 +2265,7 @@ rules :: [Rule]
 rules =
   [ ruleIntersect
   , ruleIntersectOf
+  , ruleIntersectYear
   , ruleAbsorbOnTime
   , ruleAbsorbOnADOW
   , ruleAbsorbInMonthYear
@@ -2296,8 +2317,6 @@ rules =
   , ruleYYYYMMDD
   , ruleMMYYYY
   , ruleNumeralQuarterYear
-  , ruleQuarterNumeralYear
-  , ruleYearQuarterNumeral
   , ruleNumeralWeekYear
   , ruleIntervalYTD
   , ruleIntervalMTD
@@ -2350,6 +2369,8 @@ rules =
   , ruleDayInDuration
   , ruleDurationAfterBeforeTime
   , ruleIntervalForDurationFrom
+  , ruleIntervalFromTimeForDuration
+  , ruleIntervalTimeForDuration
   , ruleInNumeral
   , ruleTimezone
   , rulePartOfMonth
